@@ -1,14 +1,18 @@
 #!/bin/bash
 
+set -e
+
 cd ~ || exit
 
 sudo apt-get install redis-server
 
-nvm install 10
+sudo apt install nodejs
+
+sudo apt install npm
 
 pip install frappe-bench
 
-git clone https://github.com/frappe/frappe --branch "${GITHUB_BASE_REF}" --depth 1
+git clone https://github.com/frappe/frappe --branch "${GITHUB_BASE_REF:-${GITHUB_REF##*/}}" --depth 1
 bench init --skip-assets --frappe-path ~/frappe --python "$(which python)" frappe-bench
 
 mkdir ~/frappe-bench/sites/test_site
@@ -38,5 +42,6 @@ sed -i 's/socketio:/# socketio:/g' Procfile
 sed -i 's/redis_socketio:/# redis_socketio:/g' Procfile
 
 bench get-app erpnext "${GITHUB_WORKSPACE}"
-bench start &
+bench start &> bench_run_logs.txt &
 bench --site test_site reinstall --yes
+bench build --app frappe

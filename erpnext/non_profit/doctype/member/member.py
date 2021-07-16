@@ -28,7 +28,7 @@ class Member(Document):
 	def setup_subscription(self):
 		non_profit_settings = frappe.get_doc('Non Profit Settings')
 		if not non_profit_settings.enable_razorpay_for_memberships:
-			frappe.throw('Please check Enable Razorpay for Memberships in {0} to setup subscription').format(
+			frappe.throw(_('Please check Enable Razorpay for Memberships in {0} to setup subscription')).format(
 				get_link_to_form('Non Profit Settings', 'Non Profit Settings'))
 
 		controller = get_payment_gateway_controller("Razorpay")
@@ -53,6 +53,7 @@ class Member(Document):
 
 		return subscription
 
+	@frappe.whitelist()
 	def make_customer_and_link(self):
 		if self.customer:
 			frappe.msgprint(_("A customer is already linked to this Member"))

@@ -46,9 +46,6 @@ frappe.ui.form.on("Item", {
 			}, __("View"));
 		}
 
-		if (!frm.doc.is_fixed_asset) {
-			erpnext.item.make_dashboard(frm);
-		}
 
 		if (frm.doc.is_fixed_asset) {
 			frm.trigger('is_fixed_asset');
@@ -96,6 +93,10 @@ frappe.ui.form.on("Item", {
 
 		erpnext.item.edit_prices_button(frm);
 		erpnext.item.toggle_attributes(frm);
+
+		if (!frm.doc.is_fixed_asset) {
+			erpnext.item.make_dashboard(frm);
+		}
 
 		frm.add_custom_button(__('Duplicate'), function() {
 			var new_item = frappe.model.copy_doc(frm.doc);
@@ -379,8 +380,9 @@ $.extend(erpnext.item, {
 
 		// Show Stock Levels only if is_stock_item
 		if (frm.doc.is_stock_item) {
-			frappe.require('assets/js/item-dashboard.min.js', function() {
-				const section = frm.dashboard.add_section('', __("Stock Levels"));
+			frappe.require('item-dashboard.bundle.js', function() {
+				frm.dashboard.parent.find('.stock-levels').remove();
+				const section = frm.dashboard.add_section('', __("Stock Levels"), 'stock-levels');
 				erpnext.item.item_dashboard = new erpnext.stock.ItemDashboard({
 					parent: section,
 					item_code: frm.doc.name,
@@ -473,11 +475,15 @@ $.extend(erpnext.item, {
 								me.multiple_variant_dialog.get_primary_btn().html(__('Create Variants'));
 								me.multiple_variant_dialog.disable_primary_action();
 							} else {
+
 								let no_of_combinations = lengths.reduce((a, b) => a * b, 1);
-								me.multiple_variant_dialog.get_primary_btn()
-									.html(__(
-										`Make ${no_of_combinations} Variant${no_of_combinations === 1 ? '' : 's'}`
-									));
+								let msg;
+								if (no_of_combinations === 1) {
+									msg = __("Make {0} Variant", [no_of_combinations]);
+								} else {
+									msg = __("Make {0} Variants", [no_of_combinations]);
+								}
+								me.multiple_variant_dialog.get_primary_btn().html(msg);
 								me.multiple_variant_dialog.enable_primary_action();
 							}
 						}
@@ -717,6 +723,18 @@ $.extend(erpnext.item, {
 				.on('focus', function(e) {
 					$(e.target).val('').trigger('input');
 				})
+				.on("awesomplete-open", () => {
+					let modal = field.$input.parents('.modal-dialog')[0];
+					if (modal) {
+						$(modal).removeClass("modal-dialog-scrollable");
+					}
+				})
+				.on("awesomplete-close", () => {
+					let modal = field.$input.parents('.modal-dialog')[0];
+					if (modal) {
+						$(modal).addClass("modal-dialog-scrollable");
+					}
+				});
 		});
 	},
 
